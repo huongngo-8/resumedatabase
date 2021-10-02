@@ -1,13 +1,14 @@
-# import
 import pandas as pd
-import os 
+import parsedResumeCleaning as rdc
+import resumeParser as rp
+import os
+import csv
 
-checkInData = "dummydata.csv"
-resumeData = "Repeat Verification.csv"
-
+checkInData = "/Users/huongngo/resumedatabase/dummydata.csv"
+resumeData = "/Users/huongngo/resumedatabase/repeatingverification.csv"
 
 checkInDf = pd.read_csv(checkInData)
-resumeDf = pd.read.csv(resumeData)
+resumeDf = pd.read_csv(resumeData)
 
 checkInDict = checkInDf.to_dict('list')
 resumeDict = resumeDf.to_dict('list')
@@ -19,6 +20,8 @@ firstNames = checkInDict['First Name']
 lastNames = checkInDict['Last Name']
     # Email
 emails = checkInDict['Email']
+    # Email from Resume Database
+emailVerifying = resumeDict['Email']
     # Phone Number
 phoneNumbers = checkInDict['Phone Number']
     # Pronouns
@@ -29,22 +32,20 @@ employmentStatus = checkInDict['Are you currently looking for a job or internshi
 levelOfStudy = checkInDict['What is your current level of study?.']
     # Name of University
 universities = checkInDict['Name of University']
-    # University (Other)
-universityOther = checkInDict['Name of University (Other)']
+    # Other University
+otherUniversities = checkInDict['Please enter name of your university']
     # Majors
 majors = checkInDict['What is your major?']
     # Other Majors
-otherMajors = checkInDict['If applicable, what are your other major(s)?']
+additionalMajors = checkInDict['If applicable, what are your other major(s)?']
     # Minors
 minors = checkInDict['If applicable, what are your minor(s)?']
     # Majors (Others, not in MLH)
-majorsOther = checkInDict['Major (Other)']
+otherMajors = checkInDict['Please enter your major']
     # Name of High School
 highSchools = checkInDict['Name of High School']
     # Name of Bootcamp Program
-bootcamps = checkInDict['Name of Bootcamp Program']
-    # Title/Company
-titleCompany = checkInDict['Title and Company']
+bootcamps = checkInDict['Name of Bootcamp program.']
     # Country of Residence
 countries = checkInDict['What is your country of residence?']
     # State of Residence
@@ -56,97 +57,82 @@ resumes = checkInDict['Resume (Optional)']
     # LinkedIn Profile Link
 linkedIn = checkInDict['LinkedIn Profile (Optional)']
 
-
-def wordReformatting(string):
-    if string[0].islower():
-        string[0].upper
-    
-    if not string[1:].islower():
-        string[1:].lower
-
-    return string
-
-def emailReformatting(email):
-    if not email.islower():
-        email.lower
-        
-    return email
-
-def stringReplacement(string, column):
-    if string.find(" ") != -1:
-        otherWords = string.split(" ")
-        for word in otherWords:
-            newWord = wordReformatting(word)
-            newString = newString + " " + newWord
-            newString = newString[1:]
-    else:
-        newString = wordReformatting(string)
-    column[column.index(string)] = newString
-
-    return column
-
+# Capitalizing first name column
 for firstName in firstNames:
-    newFirstName = wordReformatting(firstName)
-    firstNames[firstNames.index(firstName)] = newFirstName
+    firstNames[firstNames.index(firstName)] = firstName.title()
+
+# Capitalizing last name column
 for lastName in lastNames:
-    newLastName = wordReformatting(lastName)
-    lastNames[lastNames.index(lastName)] = newLastName
+    lastNames[lastNames.index(lastName)] = lastName.title()
 
 for email in emails:
-    newEmail = emailReformatting(email)
-    emails[emails.index(email)] = newEmail
-
-for university in universities:
-    if university == "Other":
-        otherUniversity = universityOther[universities.index(university)]
-        if not otherUniversity.isnan():
-            stringReplacement(otherUniversity, universities)
-
-for major in majors:
-    index = majors.index(major)
-    if major == "Other":
-        majorOther = majorsOther[index]
-        otherMajor = otherMajors[index]
-        if not majorOther.isnan():
-            stringReplacement(majorOther, majors)
+    emails[emails.index(email)] = email.lower()
+    if email in emailVerifying:
+        row = checkInDf.loc[checkInDf['Email'] == email]
+        olderRow = resumeDf.loc[resumeDf['Email'] == email]
+        row.to_csv('repeats.csv', mode='a', header=False)
+        olderRow.to_csv('repeats.csv', mode='a', header=False)
     
-    # Check for entry in "If applicable, what are your other major(s)" column (adjacent)
-        # If entry not blank - NEED TO DOUBLE CHECK THIS, NOT SURE IF DICTIONARY OF COLUMN WILL SHOW BLANKS OR NOT ACCOUNT FOR BLANK ENTRIES AT ALL
-            # wordReformatting(word) - word is Major (Other) entry
-                # Check if first character of each word (separated by " " or ",") is upper case, and remaining characters is lower case
-                    # Reformat each "word" so that first character is capital and remaining is lower case
-    # Concatenate the string from  "If applicable, what are your other major(s)" column with the string from the Major column and permanently add to the Major column
-    if not otherMajor.isnan():
-        if otherMajor.find(" ") != -1:
-            otherMajorWords = otherMajor.split(" ")
-            for word in otherMajorWords:
-                new_word = wordReformatting(word)
-                new_major = new_major + " " + new_word
-                new_major = new_major[1:]
-        else:
-            new_major = wordReformatting(otherMajor)
-        majors[index] = majors[index] + ", " + new_major
 
+# Capitalizing "What is your current level of study?" column
+for level in levelOfStudy:
+    if type(level) != float:
+        levelOfStudy[levelOfStudy.index(level)] = level.title()
+
+
+# Capitalizing the "Other" universities
+for university in universities:
+    if university == 'Other':
+        universities[universities.index(university)] = otherUniversities[universities.index(university)].title()
+    
+# Capitalizing the "Other" majors
+for major in majors:
+    if major == 'Other':
+        majors[majors.index(major)] = otherMajors[majors.index(major)].title()
+
+    
+# Capitalizing additional majors
+for additionalMajor in additionalMajors:
+    if type(additionalMajor) != float:
+        additionalMajors[additionalMajors.index(additionalMajor)] = additionalMajor.title()
+
+# bug here, will check back again!
+for major in majors:
+    if type(additionalMajors[majors.index(major)]) == str and type(major) == str:
+        newMajor = ""
+        newMajor = major + ", " + additionalMajors[majors.index(major)]
+        majors[majors.index(major)] = newMajor
+
+# Capitalizing the minors
 for minor in minors:
-    stringReplacement(minor, minors)
+    if type(minor) != float:
+        minors[minors.index(minor)] = minor.title()
 
+# Capitalizing high schools
 for highSchool in highSchools:
-    stringReplacement(highSchool, highSchools)
+    if type(highSchool) != float:
+        highSchools[highSchools.index(highSchool)] = highSchool.title()
 
+
+# Capitalizing bootcamps
 for bootcamp in bootcamps:
-    stringReplacement(bootcamp, bootcamps)
+    if type(bootcamp) != float:
+        bootcamps[bootcamps.index(bootcamp)] = bootcamp.title()
 
+# Capitalizing cities
 for city in cities:
-    stringReplacement(city, cities)
+    if type(city) != float:
+        cities[cities.index(city)] = city.title()
 
-# OUTPUT PROCESSING
 
 cleanedDicts = {'First Name': firstNames, 'Last Name': lastNames, 'Phone Number': phoneNumbers, 'Email': emails, 'Pronouns': pronouns, 
-'Current Level of Study': levelOfStudy, 'Employment Status': employmentStatus, 'College': universities, 'Major': majors, 'Minor': minors, 
-'High School': highSchools, 'Bootcamp Program': bootcamps, 'Title and Company': titleCompany, 'Country of Residence': countries, 'State': states, 
+'Current Level of Study': levelOfStudy, 'Employment Status': employmentStatus, 'College': universities, 'Major': majors, 'Other': additionalMajors, 'Minor': minors, 
+'High School': highSchools, 'Bootcamp Program': bootcamps, 'Country of Residence': countries, 'State': states, 
 'City': cities, 'Resume': resumes, 'LinkedIn': linkedIn}
 
 cleanedDf = pd.DataFrame.from_dict(cleanedDicts)
 
 cleanedDf.to_csv("cleanedData.csv", index = "False")
+
+
 
