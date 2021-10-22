@@ -1,17 +1,24 @@
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from _typeshed import NoneType
 import pandas as pd
-import parsedResumeCleaning as rdc
 import resumeParser as rp
+import urllib as url
+import re
 import os
 import csv
 
-checkInData = "/Users/huongngo/resumedatabase/dummydata.csv"
-resumeData = "/Users/huongngo/resumedatabase/repeatingverification.csv"
+# locating where check in data file is
+checkInData = "COPY PATH OF CHECK IN CSV FILE HERE"
 
+# reading in the check in data as a dataframe
 checkInDf = pd.read_csv(checkInData)
-resumeDf = pd.read_csv(resumeData)
 
+# dropping duplicates within the check-in dataset
+checkInDf = checkInDf.drop_duplicates(subset=['First Name', 'Last Name'])
+
+# converting every column of dataframe into a list
 checkInDict = checkInDf.to_dict('list')
-resumeDict = resumeDf.to_dict('list')
 
 # Dictionaries
     # First Name
@@ -20,8 +27,6 @@ firstNames = checkInDict['First Name']
 lastNames = checkInDict['Last Name']
     # Email
 emails = checkInDict['Email']
-    # Email from Resume Database
-emailVerifying = resumeDict['Email']
     # Phone Number
 phoneNumbers = checkInDict['Phone Number']
     # Pronouns
@@ -58,81 +63,91 @@ resumes = checkInDict['Resume (Optional)']
 linkedIn = checkInDict['LinkedIn Profile (Optional)']
 
 # Capitalizing first name column
-for firstName in firstNames:
-    firstNames[firstNames.index(firstName)] = firstName.title()
+for i in range(len(firstNames)):
+    firstNames[i] = firstNames[i].title()
 
 # Capitalizing last name column
-for lastName in lastNames:
-    lastNames[lastNames.index(lastName)] = lastName.title()
+for i in range(len(lastNames)):
+    lastNames[i] = lastNames[i].title()
 
-for email in emails:
-    emails[emails.index(email)] = email.lower()
-    if email in emailVerifying:
-        row = checkInDf.loc[checkInDf['Email'] == email]
-        olderRow = resumeDf.loc[resumeDf['Email'] == email]
-        row.to_csv('repeats.csv', mode='a', header=False)
-        olderRow.to_csv('repeats.csv', mode='a', header=False)
-    
+for i in range(len(emails)):
+    emails[i] = emails[i].lower()
 
 # Capitalizing "What is your current level of study?" column
-for level in levelOfStudy:
-    if type(level) != float:
-        levelOfStudy[levelOfStudy.index(level)] = level.title()
+for i in range(len(levelOfStudy)):
+    if type(levelOfStudy[i]) != float:
+        levelOfStudy[i] = levelOfStudy[i].title()
 
 
 # Capitalizing the "Other" universities
-for university in universities:
-    if university == 'Other':
-        universities[universities.index(university)] = otherUniversities[universities.index(university)].title()
+for i in range(len(universities)):
+    if type(otherUniversities[i]) != float and universities[i] == 'Other':
+        universities[i] = otherUniversities[i].title()
     
 # Capitalizing the "Other" majors
-for major in majors:
-    if major == 'Other':
-        majors[majors.index(major)] = otherMajors[majors.index(major)].title()
+for i in range(len(majors)):
+    if type(majors[i]) != float and majors[i] == 'Other':
+        majors[i] = otherMajors[i].title()
 
     
 # Capitalizing additional majors
-for additionalMajor in additionalMajors:
-    if type(additionalMajor) != float:
-        additionalMajors[additionalMajors.index(additionalMajor)] = additionalMajor.title()
+for i in range(len(additionalMajors)):
+    if type(additionalMajors[i]) != float:
+        additionalMajors[i] = additionalMajors[i].title()
 
-# bug here, will check back again!
-for major in majors:
-    if type(additionalMajors[majors.index(major)]) == str and type(major) == str:
+# Concatenating on the major with additional major(s) individual stated
+for i in range(len(majors)):
+    if type(additionalMajors[i]) == str and type(majors[i]) == str:
         newMajor = ""
-        newMajor = major + ", " + additionalMajors[majors.index(major)]
-        majors[majors.index(major)] = newMajor
+        newMajor = majors[i] + ", " + additionalMajors[i]
+        majors[i] = newMajor
 
 # Capitalizing the minors
-for minor in minors:
-    if type(minor) != float:
-        minors[minors.index(minor)] = minor.title()
+for i in range(len(minors)):
+    if type(minors[i]) != float:
+        minors[i] = minors[i].title()
 
 # Capitalizing high schools
-for highSchool in highSchools:
-    if type(highSchool) != float:
-        highSchools[highSchools.index(highSchool)] = highSchool.title()
+for i in range(len(highSchools)):
+    if type(highSchools[i]) != float:
+        highSchools[i] = highSchools[i].title()
 
 
 # Capitalizing bootcamps
-for bootcamp in bootcamps:
-    if type(bootcamp) != float:
-        bootcamps[bootcamps.index(bootcamp)] = bootcamp.title()
+for i in range(len(bootcamps)):
+    if type(bootcamps[i]) != float:
+        bootcamps[i] = bootcamps[i].title()
 
 # Capitalizing cities
-for city in cities:
-    if type(city) != float:
-        cities[cities.index(city)] = city.title()
+for i in range(len(cities)):
+    if type(cities[i]) != float:
+        cities[i] = cities[i].title()
 
-
-cleanedDicts = {'First Name': firstNames, 'Last Name': lastNames, 'Phone Number': phoneNumbers, 'Email': emails, 'Pronouns': pronouns, 
-'Current Level of Study': levelOfStudy, 'Employment Status': employmentStatus, 'College': universities, 'Major': majors, 'Other': additionalMajors, 'Minor': minors, 
-'High School': highSchools, 'Bootcamp Program': bootcamps, 'Country of Residence': countries, 'State': states, 
+cleanedDict = {'First Name': firstNames, 'Last Name': lastNames, 'Phone Number': phoneNumbers, 'Email': emails, 'Pronouns': pronouns, 
+'Current Level of Study': levelOfStudy, 'Employment Status': employmentStatus, 'College': universities, 'Major': majors, 
+'Minor': minors, 'High School': highSchools, 'Bootcamp': bootcamps, 'Country': countries, 'State': states, 
 'City': cities, 'Resume': resumes, 'LinkedIn': linkedIn}
 
-cleanedDf = pd.DataFrame.from_dict(cleanedDicts)
+finalCheckInDf = pd.DataFrame.from_dict(cleanedDict)
 
-cleanedDf.to_csv("cleanedData.csv", index = "False")
+# Saves all valid resume files to a spreadsheet and downloads it (don't know where, need to test)
+files = []
+for i in range(len(resumes)):
+    if type(resumes[i]) == float:
+        files.append(None) # not sure if type is float
+    else:
+        fileName = resumes[i].split('/')[-1]
+        url.request.urlretrieve(resumes[i], fileName)
+        files.append(fileName)
+
+cleanedResumeDf, cleanedResumeCSV = rp.resumeParser(files)
+
+finalDf = pd.merge(finalCheckInDf, cleanedResumeDf, left_index=True, right_index=True)
+finalCSV = finalDf.to_csv('NAME OF THE FINAL CHAPTER-SPECIFIC RESUME BOOK')
+
+print('Complete Creation of TechTogether Resume Book')
+
+
 
 
 
