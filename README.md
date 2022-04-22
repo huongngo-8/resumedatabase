@@ -1,4 +1,3 @@
 # Resume Database Project
 
-This project's objective is to build a resume database for TechTogether. This repo houses scripts to clean incoming and future check-in data and parse resume data from attached resume files. 
-Instructions on how to use the scripts are in the PDF file called "How to Clean and Migrate Check-in Data".
+This project was created to build a resume database for TechTogether, a non-profit organization that aims to elevate the hackathon experience and make it more inclusive by initiating hackathon events that focus on marginalized genders in the tech industry. The code in this project assists with the retrieval of data from resumes by using resume_parser-a resume parsing package-the cleaning and transformation of the raw resume data and the transfer of cleaned data to a database with search and filtering capabilities. 
